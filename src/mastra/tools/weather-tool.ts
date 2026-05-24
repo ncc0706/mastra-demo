@@ -22,23 +22,27 @@ interface QWeatherNowResponse {
   };
 }
 
+export const weatherSchema = z.object({
+  temperature: z.number(),
+  feelsLike: z.number(),
+  humidity: z.number(),
+  windSpeed: z.number(),
+  windGust: z.number(),
+  conditions: z.string(),
+  location: z.string(),
+});
+
+export type WeatherData = z.infer<typeof weatherSchema>;
+
 export const weatherTool = createTool({
   id: 'get-weather',
   description: '获取指定位置的当前天气信息',
   inputSchema: z.object({
     location: z.string().describe('城市名称'),
   }),
-  outputSchema: z.object({
-    temperature: z.number(),
-    feelsLike: z.number(),
-    humidity: z.number(),
-    windSpeed: z.number(),
-    windGust: z.number(),
-    conditions: z.string(),
-    location: z.string(),
-  }),
+  outputSchema: weatherSchema,
   execute: async (inputData) => {
-    return await getWeather(inputData.location);
+    return await fetchWeatherByLocation(inputData.location);
   },
 });
 
@@ -69,7 +73,7 @@ async function qWeatherFetch<T>(path: string): Promise<T> {
   return data;
 }
 
-const getWeather = async (location: string) => {
+export async function fetchWeatherByLocation(location: string): Promise<WeatherData> {
   const geoData = await qWeatherFetch<QWeatherGeoResponse>(
     `/geo/v2/city/lookup?location=${encodeURIComponent(location)}&number=1&lang=zh`,
   );
@@ -99,4 +103,4 @@ const getWeather = async (location: string) => {
     conditions: now.text,
     location: locationName,
   };
-};
+}

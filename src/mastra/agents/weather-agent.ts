@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
+import { models } from '../config/models';
 import { weatherTool } from '../tools/weather-tool';
 import { scorers } from '../scorers/weather-scorer';
 
@@ -18,7 +19,7 @@ export const weatherAgent = new Agent({
 - 若用户询问活动建议，请按用户要求的格式回复
 
 使用 weatherTool 获取当前实时天气数据。`,
-  model: 'nvidia/meta/llama-3.3-70b-instruct',
+  model: models.weatherAgent,
   tools: { weatherTool },
   scorers: {
     toolCallAppropriateness: {
@@ -35,8 +36,8 @@ export const weatherAgent = new Agent({
         rate: 1,
       },
     },
-    translation: {
-      scorer: scorers.translationScorer,
+    weatherDetail: {
+      scorer: scorers.weatherDetailScorer,
       sampling: {
         type: 'ratio',
         rate: 1,

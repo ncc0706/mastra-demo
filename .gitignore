@@ -7,4 +7,7 @@ dist
 *.db 
 *.db-* 
 .netlify 
-.vercel 
+.vercel
+.idea
+src/mastra/public
+

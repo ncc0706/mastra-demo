@@ -1,152 +1,83 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
-
-const forecastSchema = z.object({
-  date: z.string(),
-  maxTemp: z.number(),
-  minTemp: z.number(),
-  precipitationChance: z.number(),
-  condition: z.string(),
-  location: z.string(),
-})
-
-function getWeatherCondition(code: number): string {
-  const conditions: Record<number, string> = {
-    0: 'Clear sky',
-    1: 'Mainly clear',
-    2: 'Partly cloudy',
-    3: 'Overcast',
-    45: 'Foggy',
-    48: 'Depositing rime fog',
-    51: 'Light drizzle',
-    53: 'Moderate drizzle',
-    55: 'Dense drizzle',
-    61: 'Slight rain',
-    63: 'Moderate rain',
-    65: 'Heavy rain',
-    71: 'Slight snow fall',
-    73: 'Moderate snow fall',
-    75: 'Heavy snow fall',
-    95: 'Thunderstorm',
-  }
-  return conditions[code] || 'Unknown'
-}
+import { fetchWeatherByLocation, weatherSchema } from '../tools/weather-tool';
 
 const fetchWeather = createStep({
   id: 'fetch-weather',
-  description: 'Fetches weather forecast for a given city',
+  description: '通过和风天气获取指定城市的实时天气',
   inputSchema: z.object({
-    city: z.string().describe('The city to get the weather for'),
+    city: z.string().describe('城市名称'),
   }),
-  outputSchema: forecastSchema,
+  outputSchema: weatherSchema,
   execute: async ({ inputData }) => {
     if (!inputData) {
-      throw new Error('Input data not found');
+      throw new Error('缺少输入数据');
     }
 
-    const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(inputData.city)}&count=1`;
-    const geocodingResponse = await fetch(geocodingUrl);
-    const geocodingData = (await geocodingResponse.json()) as {
-      results: { latitude: number; longitude: number; name: string }[];
-    };
-
-    if (!geocodingData.results?.[0]) {
-      throw new Error(`Location '${inputData.city}' not found`);
-    }
-
-    const { latitude, longitude, name } = geocodingData.results[0];
-
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=precipitation,weathercode&timezone=auto,&hourly=precipitation_probability,temperature_2m`;
-    const response = await fetch(weatherUrl);
-    const data = (await response.json()) as {
-      current: {
-        time: string
-        precipitation: number
-        weathercode: number
-      }
-      hourly: {
-        precipitation_probability: number[]
-        temperature_2m: number[]
-      }
-    }
-
-    const forecast = {
-      date: new Date().toISOString(),
-      maxTemp: Math.max(...data.hourly.temperature_2m),
-      minTemp: Math.min(...data.hourly.temperature_2m),
-      condition: getWeatherCondition(data.current.weathercode),
-      precipitationChance: data.hourly.precipitation_probability.reduce(
-        (acc, curr) => Math.max(acc, curr),
-        0
-      ),
-      location: name
-    }
-
-    return forecast;
+    return await fetchWeatherByLocation(inputData.city);
   },
 });
 
-
 const planActivities = createStep({
   id: 'plan-activities',
-  description: 'Suggests activities based on weather conditions',
-  inputSchema: forecastSchema,
+  description: '根据实时天气推荐合适的活动',
+  inputSchema: weatherSchema,
   outputSchema: z.object({
     activities: z.string(),
   }),
   execute: async ({ inputData, mastra }) => {
-    const forecast = inputData
+    const weather = inputData;
 
-    if (!forecast) {
-      throw new Error('Forecast data not found')
+    if (!weather) {
+      throw new Error('缺少天气数据');
     }
 
     const agent = mastra?.getAgent('weatherAgent');
     if (!agent) {
-      throw new Error('Weather agent not found');
+      throw new Error('未找到 weatherAgent');
     }
 
-    const prompt = `Based on the following weather forecast for ${forecast.location}, suggest appropriate activities:
-      ${JSON.stringify(forecast, null, 2)}
-      For each day in the forecast, structure your response exactly as follows:
+    const prompt = `请根据 ${weather.location} 的实时天气，推荐合适的活动安排：
 
-      📅 [Day, Month Date, Year]
-      ═══════════════════════════
+${JSON.stringify(weather, null, 2)}
 
-      🌡️ WEATHER SUMMARY
-      • Conditions: [brief description]
-      • Temperature: [X°C/Y°F to A°C/B°F]
-      • Precipitation: [X% chance]
+请按以下格式用中文回复：
 
-      🌅 MORNING ACTIVITIES
-      Outdoor:
-      • [Activity Name] - [Brief description including specific location/route]
-        Best timing: [specific time range]
-        Note: [relevant weather consideration]
+📅 活动建议
+═══════════════════════════
 
-      🌞 AFTERNOON ACTIVITIES
-      Outdoor:
-      • [Activity Name] - [Brief description including specific location/route]
-        Best timing: [specific time range]
-        Note: [relevant weather consideration]
+🌡️ 天气概况
+• 地点：${weather.location}
+• 天气：${weather.conditions}
+• 温度：${weather.temperature}°C（体感 ${weather.feelsLike}°C）
+• 湿度：${weather.humidity}%
+• 风速：${weather.windSpeed} 公里/小时
 
-      🏠 INDOOR ALTERNATIVES
-      • [Activity Name] - [Brief description including specific venue]
-        Ideal for: [weather condition that would trigger this alternative]
+🌅 上午活动
+户外：
+• [活动名称] - [简要说明，含具体地点或路线]
+  建议时段：[具体时间]
+  备注：[与天气相关的注意事项]
 
-      ⚠️ SPECIAL CONSIDERATIONS
-      • [Any relevant weather warnings, UV index, wind conditions, etc.]
+🌞 下午活动
+户外：
+• [活动名称] - [简要说明，含具体地点或路线]
+  建议时段：[具体时间]
+  备注：[与天气相关的注意事项]
 
-      Guidelines:
-      - Suggest 2-3 time-specific outdoor activities per day
-      - Include 1-2 indoor backup options
-      - For precipitation >50%, lead with indoor activities
-      - All activities must be specific to the location
-      - Include specific venues, trails, or locations
-      - Consider activity intensity based on temperature
-      - Keep descriptions concise but informative
+🏠 室内备选
+• [活动名称] - [简要说明，含具体场所]
+  适用场景：[何种天气条件下优先选择]
 
-      Maintain this exact formatting for consistency, using the emoji and section headers as shown.`;
+⚠️ 特别提醒
+• [如高温、大风、雨雪等需注意的事项]
+
+要求：
+- 每个时段推荐 2-3 个户外活动
+- 提供 1-2 个室内备选方案
+- 活动需结合当地特色，地点尽量具体
+- 根据温度和天气状况调整活动强度
+- 描述简洁、实用`;
 
     const response = await agent.stream([
       {
@@ -158,7 +89,6 @@ const planActivities = createStep({
     let activitiesText = '';
 
     for await (const chunk of response.textStream) {
-      process.stdout.write(chunk);
       activitiesText += chunk;
     }
 
@@ -171,11 +101,11 @@ const planActivities = createStep({
 const weatherWorkflow = createWorkflow({
   id: 'weather-workflow',
   inputSchema: z.object({
-    city: z.string().describe('The city to get the weather for'),
+    city: z.string().describe('要查询天气的城市名称'),
   }),
   outputSchema: z.object({
     activities: z.string(),
-  })
+  }),
 })
   .then(fetchWeather)
   .then(planActivities);
