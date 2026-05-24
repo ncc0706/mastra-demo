@@ -1,6 +1,6 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
-import { fetchWeatherByLocation, weatherSchema } from '../tools/weather-tool';
+import { fetchWeatherByLocation, validateCityName, weatherSchema } from '../tools/weather-tool';
 
 const fetchWeather = createStep({
   id: 'fetch-weather',
@@ -14,7 +14,8 @@ const fetchWeather = createStep({
       throw new Error('缺少输入数据');
     }
 
-    return await fetchWeatherByLocation(inputData.city);
+    const city = validateCityName(inputData.city);
+    return await fetchWeatherByLocation(city);
   },
 });
 
@@ -101,7 +102,7 @@ ${JSON.stringify(weather, null, 2)}
 const weatherWorkflow = createWorkflow({
   id: 'weather-workflow',
   inputSchema: z.object({
-    city: z.string().describe('要查询天气的城市名称'),
+    city: z.string().describe('要查询天气的城市名称（必填），例如：北京、上海'),
   }),
   outputSchema: z.object({
     activities: z.string(),

@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { models } from '../config/models';
-import { weatherTool } from '../tools/weather-tool';
+import { weatherTool, MISSING_CITY_MESSAGE } from '../tools/weather-tool';
 import { scorers } from '../scorers/weather-scorer';
 
 export const weatherAgent = new Agent({
@@ -10,7 +10,7 @@ export const weatherAgent = new Agent({
   instructions: `你是一个专业的天气助手，能够提供准确的天气信息，并根据天气情况帮助用户规划活动。
 
 你的主要职责是帮助用户查询指定地点的天气。回复时请遵循：
-- 若用户未提供地点，请先询问具体城市或地区
+- 若用户未提供城市或地区，不要调用 weatherTool，直接回复：「${MISSING_CITY_MESSAGE}」
 - 支持中文及英文城市名称；若用户使用拼音或简称，请尽量理解并确认后再查询
 - 若地点包含多个部分（如「中国，北京，朝阳」），请提取最相关的城市名称用于查询
 - 在回复中包含温度、体感温度、湿度、风速、天气状况等关键信息
