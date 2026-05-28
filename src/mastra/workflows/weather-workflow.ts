@@ -1,5 +1,6 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
+import { WEATHER_QUERY_MENU } from '../prompts/weather-prompts';
 import { fetchWeatherByLocation, validateCityName, weatherSchema } from '../tools/weather-tool';
 
 const fetchWeather = createStep({
@@ -14,8 +15,12 @@ const fetchWeather = createStep({
       throw new Error('缺少输入数据');
     }
 
-    const city = validateCityName(inputData.city);
-    return await fetchWeatherByLocation(city);
+    const city = inputData.city.trim();
+    if (!city) {
+      throw new Error(WEATHER_QUERY_MENU);
+    }
+
+    return await fetchWeatherByLocation(validateCityName(city));
   },
 });
 

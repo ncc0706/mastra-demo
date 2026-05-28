@@ -1,0 +1,8 @@
+
+
+
+npm i @types/node -D
+
+https://dev.qweather.com/docs/
+
+mw3fc2wdxc.re.qweatherapi.com

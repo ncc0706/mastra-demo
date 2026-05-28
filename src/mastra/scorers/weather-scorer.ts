@@ -65,7 +65,7 @@ ${results.preprocessStepResult.assistantText}
 
 请评估：
 1) needsWeatherQuery：用户是否在询问天气、气温、穿衣或活动等与天气相关的问题。
-2) locationHandledCorrectly：若用户提供了地点，助手是否正确理解并使用了该地点（中文、英文、拼音均可；若未提供地点且助手在追问，也算正确）。
+2) locationHandledCorrectly：若用户提供了地点，助手是否正确理解并使用了该地点（中文、英文、拼音均可；若未提供地点且助手展示 A/B/C/D 菜单或在追问，也算正确）。
 3) includesTemperature / includesFeelsLike / includesHumidity / includesWindSpeed / includesConditions：助手回复是否包含对应信息（允许不同表述，如「25°C」「25度」「湿度 60%」）。
 
 返回 JSON：
