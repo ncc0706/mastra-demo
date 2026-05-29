@@ -17,12 +17,13 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
-    "@mastra/core": "^1.36.0",
+    "@mastra/core": "^1.37.1",
     "@mastra/duckdb": "^1.4.0",
+    "@mastra/editor": "^0.10.1",
     "@mastra/evals": "^1.2.2",
     "@mastra/libsql": "^1.11.1",
     "@mastra/loggers": "^1.1.1",
-    "@mastra/memory": "^1.19.0",
+    "@mastra/memory": "^1.20.0",
     "@mastra/observability": "^1.13.0",
     "zod": "^4.4.3"
   },

@@ -3,6 +3,8 @@
 
 npm i @types/node -D
 
+注意 mastra 不同组件版本的问题
+
 https://dev.qweather.com/docs/
 
 mw3fc2wdxc.re.qweatherapi.com
