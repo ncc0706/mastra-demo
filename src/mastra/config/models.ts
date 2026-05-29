@@ -6,6 +6,7 @@ const NVIDIA_LLAMA_3_3_70B_INSTRUCT = 'nvidia/meta/llama-3.3-70b-instruct' as co
 
 export const models = {
   weatherAgent: NVIDIA_LLAMA_3_3_70B_INSTRUCT,
+  chatAgent: NVIDIA_LLAMA_3_3_70B_INSTRUCT,
   scorerJudge: NVIDIA_LLAMA_3_3_70B_INSTRUCT,
 } as const;
 
