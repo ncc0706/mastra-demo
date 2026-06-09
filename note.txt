@@ -1,7 +1,11 @@
 
+## mastra
 
-
+```bash
 npm i @types/node -D
+npm run dev
+```
+
 
 注意 mastra 不同组件版本的问题
 
