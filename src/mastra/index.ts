@@ -8,6 +8,7 @@ import { weatherWorkflow } from './workflows/weather-workflow';
 import { chatWorkflow } from './workflows/chat-workflow';
 import { weatherAgent } from './agents/weather-agent';
 import { chatAgent } from './agents/chat-agent';
+import { wmsAnalyst } from './agents/analyst-agent';
 import { toolCallAppropriatenessScorer, completenessScorer, weatherDetailScorer } from './scorers/weather-scorer';
 
 const storage = await createMastraStorage();
@@ -15,7 +16,7 @@ await storage.init();
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow, chatWorkflow },
-  agents: { weatherAgent, chatAgent },
+  agents: { weatherAgent, chatAgent, wmsAnalyst },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, weatherDetailScorer },
   storage,
   logger: new PinoLogger({

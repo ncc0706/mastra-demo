@@ -1,7 +1,11 @@
 import { Memory } from '@mastra/memory';
+import { LibSQLStore } from '@mastra/libsql';
 
 export const weatherAgentMemory = new Memory({
-  id: 'weather-agent-memory',
+  storage: new LibSQLStore({
+    id: 'weather-agent-memory-storage',
+    url: 'file:./weather-agent-memory.db',
+  }),
   options: {
     lastMessages: 20,
   },
